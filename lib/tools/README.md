@@ -37,7 +37,7 @@ Tools that connect to local Model Context Protocol (MCP) servers running on the 
 **Status:** Stub implementation (to be completed)
 
 ### 3. MCP Remote Tools (`mcp-remote`)
-Tools that connect to remote MCP servers via HTTP/WebSocket.
+Tools that connect to remote MCP servers via JSON-RPC over HTTP.
 
 **Configuration:**
 ```json
@@ -50,7 +50,9 @@ Tools that connect to remote MCP servers via HTTP/WebSocket.
 }
 ```
 
-**Status:** Basic HTTP implementation complete
+**Notes:** If no schema is provided, tool schemas are discovered from `tools/list` at runtime.
+
+**Status:** JSON-RPC implementation complete
 
 ### 4. Custom Tools (`custom`)
 Organization-specific tools (future expansion).

@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/db/prisma"
 import { getAIProviderForModel } from "./provider-factory"
 import { calculateCost } from "@/lib/utils/cost-calculator"
-import { BUILT_IN_TOOLS, executeTool } from "@/lib/tools/registry"
-import type { Message, ToolCall } from "./types"
+import { executeTool } from "@/lib/tools/registry"
+import { listRemoteTools } from "@/lib/tools/mcp-remote-client"
+import type { MCPRemoteConfig, ToolType } from "@/lib/tools/types"
+import type { Message, ToolCall, ToolSchema } from "./types"
 
 interface ExecuteAgentParams {
   agentId: string
@@ -23,6 +25,136 @@ interface ExecuteAgentResult {
 }
 
 const MAX_TOOL_ROUNDS = 6
+
+interface ToolMetadataEntry {
+  type: ToolType
+  config?: Record<string, unknown>
+}
+
+const normalizeConfig = (value: unknown): Record<string, unknown> | undefined => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined
+  }
+  return value as Record<string, unknown>
+}
+
+const buildToolContext = async (
+  tools: {
+    builtInTool: {
+      name: string
+      type: string
+      config: unknown
+      schema: unknown
+    } | null
+    config: unknown
+  }[],
+  dataSources: {
+    dataSourceId: string
+    topK: number
+    similarityThreshold: number
+    dataSource: {
+      id: string
+      name: string
+      description: string | null
+    }
+  }[],
+  supportsTools: boolean
+): Promise<{ toolSchemas?: ToolSchema[]; toolMetadata: Map<string, ToolMetadataEntry> }> => {
+  const toolMetadata = new Map<string, ToolMetadataEntry>()
+
+  if (!supportsTools) {
+    return { toolSchemas: undefined, toolMetadata }
+  }
+
+  const toolSchemas: ToolSchema[] = []
+  const registerTool = (schema: ToolSchema, metadata: ToolMetadataEntry) => {
+    if (toolMetadata.has(schema.function.name)) {
+      return
+    }
+    toolSchemas.push(schema)
+    toolMetadata.set(schema.function.name, metadata)
+  }
+
+  for (const tool of tools) {
+    if (!tool.builtInTool) continue
+
+    const type = tool.builtInTool.type as ToolType
+    const config = normalizeConfig(tool.config || tool.builtInTool.config)
+
+    if (type === "mcp-remote") {
+      if (!config?.endpoint || typeof config.endpoint !== "string") {
+        continue
+      }
+      console.log(`Registering MCP remote tool: ${tool.builtInTool.name} with endpoint ${config.endpoint}`)
+      const remoteTools = await listRemoteTools(config as MCPRemoteConfig)
+      remoteTools.forEach((remoteTool) => {
+        const parameters =
+          remoteTool.inputSchema || remoteTool.parameters || { type: "object", properties: {} }
+        registerTool(
+          {
+          type: "function",
+          function: {
+            name: remoteTool.name,
+            description: remoteTool.description,
+            parameters,
+          },
+          },
+          { type, config }
+        )
+      })
+
+      continue
+    }
+
+    const schema = tool.builtInTool.schema as ToolSchema
+    if (schema?.function?.name) {
+      registerTool(schema, { type, config })
+    } else if (tool.builtInTool.name) {
+      toolMetadata.set(tool.builtInTool.name, { type, config })
+    }
+  }
+
+  // Register data sources as virtual tools
+  for (const ds of dataSources) {
+    const toolName = `search_${ds.dataSource.name.toLowerCase().replace(/\s+/g, "_")}`
+    const description = ds.dataSource.description
+      ? `Search the "${ds.dataSource.name}" knowledge base. ${ds.dataSource.description}`
+      : `Search the "${ds.dataSource.name}" knowledge base for relevant information.`
+
+    registerTool(
+      {
+        type: "function",
+        function: {
+          name: toolName,
+          description,
+          parameters: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "The search query to find relevant information in the knowledge base",
+              },
+            },
+            required: ["query"],
+          },
+        },
+      },
+      {
+        type: "data-source" as ToolType,
+        config: {
+          dataSourceId: ds.dataSourceId,
+          topK: ds.topK,
+          similarityThreshold: ds.similarityThreshold,
+        }
+      }
+    )
+  }
+
+  return {
+    toolSchemas: toolSchemas.length > 0 ? toolSchemas : undefined,
+    toolMetadata,
+  }
+}
 
 /**
  * Execute an agent with a user message (non-streaming)
@@ -50,6 +182,11 @@ export async function executeAgent({
             builtInTool: true,
           },
         },
+        dataSources: {
+          include: {
+            dataSource: true,
+          },
+        },
       },
     })
 
@@ -60,35 +197,11 @@ export async function executeAgent({
     // Get AI provider
     const aiProvider = await getAIProviderForModel(agent.modelId, organizationId)
 
-    // Build tools array from agent's enabled tools
-    const tools = agent.tools
-      .filter((tool) => tool.builtInTool)
-      .map((tool) => BUILT_IN_TOOLS[tool.builtInTool!.name])
-      .filter(Boolean)
-
-    // Create tool metadata map for execution (includes type and config)
-    const toolMetadata = new Map(
-      agent.tools
-        .filter((tool) => tool.builtInTool)
-        .map((tool) => [
-          tool.builtInTool!.name,
-          {
-            type: tool.builtInTool!.type as "built-in" | "mcp-local" | "mcp-remote" | "custom",
-            config: tool.config || tool.builtInTool!.config,
-          },
-        ])
+    const { toolSchemas, toolMetadata } = await buildToolContext(
+      agent.tools,
+      agent.dataSources || [],
+      aiProvider.supportsTools()
     )
-
-    const normalizeConfig = (value: unknown): Record<string, unknown> | undefined => {
-      if (!value || typeof value !== "object" || Array.isArray(value)) {
-        return undefined
-      }
-      return value as Record<string, unknown>
-    }
-
-    const toolSchemas = tools.length > 0 && aiProvider.supportsTools()
-      ? tools.map((tool) => tool.schema)
-      : undefined
 
     // Build messages array
     const messages: Message[] = [
@@ -138,7 +251,8 @@ export async function executeAgent({
               toolCall.name,
               toolCall.arguments,
               metadata?.type || "built-in",
-              normalizeConfig(metadata?.config)
+              normalizeConfig(metadata?.config),
+              organizationId
             )
             return {
               role: "tool" as const,
@@ -156,7 +270,7 @@ export async function executeAgent({
           }
         })
       )
-
+      console.log("Tool results:", toolResults)
       messages.push({
         role: "assistant",
         content: response.content || "Using tools...",
@@ -207,6 +321,11 @@ export async function executeAgentStream({
           builtInTool: true,
         },
       },
+      dataSources: {
+        include: {
+          dataSource: true,
+        },
+      },
     },
   })
 
@@ -216,36 +335,13 @@ export async function executeAgentStream({
 
   // Get AI provider
   const aiProvider = await getAIProviderForModel(agent.modelId, organizationId)
-
-  // Build tools array
-  const tools = agent.tools
-    .filter((tool) => tool.builtInTool)
-    .map((tool) => BUILT_IN_TOOLS[tool.builtInTool!.name])
-    .filter(Boolean)
-
-  const toolSchemas = tools.length > 0 && aiProvider.supportsTools()
-    ? tools.map((tool) => tool.schema)
-    : undefined
-
-  const toolMetadata = new Map(
-    agent.tools
-      .filter((tool) => tool.builtInTool)
-      .map((tool) => [
-        tool.builtInTool!.name,
-        {
-          type: tool.builtInTool!.type as "built-in" | "mcp-local" | "mcp-remote" | "custom",
-          config: tool.config || tool.builtInTool!.config,
-        },
-      ])
+  console.log("Using AI provider:", aiProvider.constructor.name, "for model:", agent.model.modelKey)
+  const { toolSchemas, toolMetadata } = await buildToolContext(
+    agent.tools,
+    agent.dataSources || [],
+    aiProvider.supportsTools()
   )
-
-  const normalizeConfig = (value: unknown): Record<string, unknown> | undefined => {
-    if (!value || typeof value !== "object" || Array.isArray(value)) {
-      return undefined
-    }
-    return value as Record<string, unknown>
-  }
-
+ console.log("Tool schemas for agent:", toolSchemas)
   // Build messages
   const messages: Message[] = [
     {
@@ -296,7 +392,7 @@ export async function executeAgentStream({
       }
 
       const toolCalls = Array.from(toolCallMap.values())
-
+      console.log("Agent made tool calls:", toolCalls)
       if (!aiProvider.supportsTools() || toolCalls.length === 0) {
         yield { done: true }
         return
@@ -311,7 +407,8 @@ export async function executeAgentStream({
               toolCall.name,
               toolCall.arguments,
               metadata?.type || "built-in",
-              normalizeConfig(metadata?.config)
+              normalizeConfig(metadata?.config),
+              organizationId
             )
             return {
               role: "tool" as const,
@@ -329,7 +426,7 @@ export async function executeAgentStream({
           }
         })
       )
-
+      console.log("Tool results:", toolResults)
       messages.push({
         role: "assistant",
         content: roundContent || "Using tools...",

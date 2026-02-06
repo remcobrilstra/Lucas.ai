@@ -92,7 +92,7 @@ export class BaseOpenAIProvider implements AIProvider {
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta
       const finishReason = chunk.choices[0]?.finish_reason
-
+      
       if (delta?.content) {
         yield {
           content: delta.content,

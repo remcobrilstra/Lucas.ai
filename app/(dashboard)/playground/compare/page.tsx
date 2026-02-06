@@ -11,6 +11,7 @@ import { PromptEditor } from "@/components/agents/prompt-editor"
 import { useToast } from "@/hooks/use-toast"
 import { formatCost } from "@/lib/utils/cost-calculator"
 import { cn } from "@/lib/utils"
+import { MarkdownContent } from "@/components/chat/markdown-content"
 import { ArrowLeft, Loader2, Sparkles } from "lucide-react"
 
 type Model = {
@@ -299,7 +300,7 @@ export default function PlaygroundComparePage() {
                           {result.error}
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap text-sm">{result.response}</p>
+                        <MarkdownContent content={result.response || ""} className="markdown-content" />
                       )}
                     </div>
                   ))}

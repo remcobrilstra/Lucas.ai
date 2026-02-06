@@ -92,6 +92,20 @@ interface ToolFormData {
   schema: string
 }
 
+const buildPlaceholderSchema = (name: string, description: string) => {
+  return {
+    type: "function",
+    function: {
+      name,
+      description,
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+  }
+}
+
 export default function ToolsPage() {
   const [tools, setTools] = useState<Tool[]>([])
   const [loading, setLoading] = useState(true)
@@ -194,15 +208,19 @@ export default function ToolsPage() {
       }
 
       let parsedSchema: Record<string, unknown>
-      try {
-        parsedSchema = JSON.parse(formData.schema)
-      } catch {
-        toast({
-          title: "Error",
-          description: "Invalid JSON in schema field",
-          variant: "destructive",
-        })
-        return
+      if (formData.type === "mcp-remote" && !formData.schema.trim()) {
+        parsedSchema = buildPlaceholderSchema(formData.name, formData.description)
+      } else {
+        try {
+          parsedSchema = JSON.parse(formData.schema)
+        } catch {
+          toast({
+            title: "Error",
+            description: "Invalid JSON in schema field",
+            variant: "destructive",
+          })
+          return
+        }
       }
 
       const payload = {
@@ -462,7 +480,10 @@ export default function ToolsPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="schema">OpenAI Function Schema (JSON)</Label>
+              <Label htmlFor="schema">
+                OpenAI Function Schema (JSON)
+                {formData.type === "mcp-remote" ? " - optional" : ""}
+              </Label>
               <Textarea
                 id="schema"
                 value={formData.schema}

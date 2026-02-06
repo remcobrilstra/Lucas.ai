@@ -10,7 +10,19 @@ const toolSchema = z.object({
   category: z.string().min(1),
   type: z.enum(["built-in", "mcp-local", "mcp-remote", "custom"]),
   config: z.any().optional(),
-  schema: z.any(),
+  schema: z.any().optional(),
+})
+
+const buildPlaceholderSchema = (name: string, description: string) => ({
+  type: "function",
+  function: {
+    name,
+    description,
+    parameters: {
+      type: "object",
+      properties: {},
+    },
+  },
 })
 
 export async function GET(req: Request) {
@@ -49,6 +61,20 @@ export async function POST(req: Request) {
 
     const body = await req.json()
     const validatedData = toolSchema.parse(body)
+
+    if (!validatedData.schema) {
+      if (validatedData.type === "mcp-remote") {
+        validatedData.schema = buildPlaceholderSchema(
+          validatedData.name,
+          validatedData.description
+        )
+      } else {
+        return NextResponse.json(
+          { error: "Schema is required for this tool type" },
+          { status: 400 }
+        )
+      }
+    }
 
     // Check if tool name already exists
     const existingTool = await prisma.builtInTool.findUnique({

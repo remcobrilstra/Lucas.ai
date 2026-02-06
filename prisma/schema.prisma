@@ -231,6 +231,7 @@ model DataSource {
   type           String   // file, web, api
   fileType       String?  // pdf, docx, txt, md
   fileUrl        String?  // Vercel Blob URL
+  filePath       String?  // Local filesystem path
   fileSize       Int?
   status         String   @default("pending") // pending, processing, indexed, failed
   chunkingStrategy String @default("fixed-size") // fixed-size, sentence, recursive, semantic

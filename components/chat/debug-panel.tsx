@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatCost } from "@/lib/utils/cost-calculator"
 import type { ToolCall } from "@/lib/ai/types"
+import type { RetrievedChunk } from "@/lib/data-sources/types"
+import { FileText } from "lucide-react"
 
 interface DebugInfo {
   usage?: {
@@ -13,6 +15,7 @@ interface DebugInfo {
   cost?: number
   responseTime?: number
   toolCalls?: ToolCall[]
+  retrievedChunks?: RetrievedChunk[]
 }
 
 interface DebugPanelProps {
@@ -105,6 +108,48 @@ export function DebugPanel({ debugInfo }: DebugPanelProps) {
                     <pre className="text-xs mt-1 overflow-x-auto">
                       {JSON.stringify(tool.arguments, null, 2)}
                     </pre>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {debugInfo.retrievedChunks && debugInfo.retrievedChunks.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Retrieved Context
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 text-sm">
+                <div className="text-xs text-muted-foreground">
+                  {debugInfo.retrievedChunks.length} chunk
+                  {debugInfo.retrievedChunks.length !== 1 ? "s" : ""} retrieved from knowledge base
+                </div>
+                {debugInfo.retrievedChunks.map((chunk, index) => (
+                  <div key={chunk.id} className="p-3 bg-muted rounded space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-xs">Source {index + 1}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {(chunk.similarity * 100).toFixed(0)}% match
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-4">
+                      {chunk.content}
+                    </p>
+                    {chunk.metadata && (
+                      <details className="text-xs">
+                        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                          Metadata
+                        </summary>
+                        <pre className="mt-1 overflow-x-auto">
+                          {JSON.stringify(chunk.metadata, null, 2)}
+                        </pre>
+                      </details>
+                    )}
                   </div>
                 ))}
               </div>

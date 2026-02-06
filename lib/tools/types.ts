@@ -4,7 +4,7 @@
 
 import type { JsonObject, JsonValue, ToolSchema } from "@/lib/ai/types"
 
-export type ToolType = "built-in" | "mcp-local" | "mcp-remote" | "custom"
+export type ToolType = "built-in" | "mcp-local" | "mcp-remote" | "custom" | "data-source"
 
 export interface BaseTool {
   name: string
@@ -27,6 +27,12 @@ export interface MCPRemoteConfig {
   endpoint: string // Remote MCP server endpoint
   apiKey?: string // Optional API key
   headers?: Record<string, string> // Additional headers
+}
+
+export interface DataSourceConfig {
+  dataSourceId: string // ID of the data source
+  topK?: number // Number of chunks to retrieve
+  similarityThreshold?: number // Minimum similarity score
 }
 
 export interface ToolExecutor {

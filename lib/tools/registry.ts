@@ -1,8 +1,9 @@
-import type { ToolExecutor, ToolType, MCPLocalConfig, MCPRemoteConfig } from "./types"
+import type { ToolExecutor, ToolType, MCPLocalConfig, MCPRemoteConfig, DataSourceConfig } from "./types"
 import type { JsonObject, ToolSchema } from "@/lib/ai/types"
 import { BuiltInToolExecutor } from "./executors/built-in-executor"
 import { MCPLocalExecutor } from "./executors/mcp-local-executor"
 import { MCPRemoteExecutor } from "./executors/mcp-remote-executor"
+import { DataSourceExecutor } from "./executors/data-source-executor"
 
 export interface Tool {
   name: string
@@ -109,7 +110,8 @@ export const BUILT_IN_TOOLS: Record<string, Tool> = {
 function createToolExecutor(
   toolName: string,
   type: ToolType,
-  config?: Record<string, unknown>
+  config?: Record<string, unknown>,
+  organizationId?: string
 ): ToolExecutor {
   switch (type) {
     case "built-in":
@@ -127,6 +129,15 @@ function createToolExecutor(
       }
       return new MCPRemoteExecutor(toolName, config as unknown as MCPRemoteConfig)
 
+    case "data-source":
+      if (!config) {
+        throw new Error(`Data source tool ${toolName} requires config`)
+      }
+      if (!organizationId) {
+        throw new Error(`Data source tool ${toolName} requires organizationId`)
+      }
+      return new DataSourceExecutor(toolName, config as unknown as DataSourceConfig, organizationId)
+
     default:
       throw new Error(`Unknown tool type: ${type}`)
   }
@@ -139,7 +150,8 @@ export async function executeTool(
   toolName: string,
   parameters: JsonObject,
   type: ToolType = "built-in",
-  config?: Record<string, unknown>
+  config?: Record<string, unknown>,
+  organizationId?: string
 ): Promise<unknown> {
   // Check if it's a built-in tool
   if (type === "built-in" && BUILT_IN_TOOLS[toolName]) {
@@ -154,7 +166,7 @@ export async function executeTool(
 
   // For other tool types, create an executor
   try {
-    const executor = createToolExecutor(toolName, type, config)
+    const executor = createToolExecutor(toolName, type, config, organizationId)
     return await executor.execute(parameters)
   } catch (error) {
     console.error(`Error executing tool ${toolName} (${type}):`, error)

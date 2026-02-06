@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import { Bot, User } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MarkdownContent } from "./markdown-content"
 
 interface Message {
   id: string
@@ -59,7 +60,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                 : "bg-muted"
             )}
           >
-            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+            <MarkdownContent content={message.content} className="markdown-content" />
             {message.timestamp && (
               <p className="text-xs opacity-70 mt-1">
                 {new Date(message.timestamp).toLocaleTimeString()}

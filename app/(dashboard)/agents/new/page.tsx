@@ -10,16 +10,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ModelSelector } from "@/components/agents/model-selector"
 import { PromptEditor } from "@/components/agents/prompt-editor"
 import { ToolSelector } from "@/components/agents/tool-selector"
+import { DataSourceSelector } from "@/components/agents/data-source-selector"
 import { useToast } from "@/hooks/use-toast"
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 
-type Step = "basic" | "model" | "prompt" | "tools" | "review"
+type Step = "basic" | "model" | "prompt" | "tools" | "data-sources" | "review"
 
 const steps: { id: Step; title: string; description: string }[] = [
   { id: "basic", title: "Basic Info", description: "Name and description" },
   { id: "model", title: "Model", description: "Select AI model" },
   { id: "prompt", title: "System Prompt", description: "Define behavior" },
   { id: "tools", title: "Tools", description: "Enable capabilities" },
+  { id: "data-sources", title: "Data Sources", description: "Attach knowledge" },
   { id: "review", title: "Review", description: "Confirm and create" },
 ]
 
@@ -35,6 +37,7 @@ export default function NewAgentPage() {
     systemPrompt: "You are a helpful AI assistant. Provide clear, accurate, and concise responses.",
     temperature: 0.7,
     toolIds: [] as string[],
+    dataSourceIds: [] as string[],
   })
 
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep)
@@ -49,6 +52,8 @@ export default function NewAgentPage() {
         return formData.systemPrompt.trim() !== ""
       case "tools":
         return true // Tools are optional
+      case "data-sources":
+        return true // Data sources are optional
       default:
         return true
     }
@@ -97,6 +102,19 @@ export default function NewAgentPage() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ toolId }),
+            })
+          )
+        )
+      }
+
+      // Add data sources if any selected
+      if (formData.dataSourceIds.length > 0) {
+        await Promise.all(
+          formData.dataSourceIds.map((dataSourceId) =>
+            fetch(`/api/agents/${agent.id}/data-sources`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ dataSourceId }),
             })
           )
         )
@@ -210,6 +228,13 @@ export default function NewAgentPage() {
             />
           )}
 
+          {currentStep === "data-sources" && (
+            <DataSourceSelector
+              selectedIds={formData.dataSourceIds}
+              onSelectionChange={(dataSourceIds) => setFormData({ ...formData, dataSourceIds })}
+            />
+          )}
+
           {currentStep === "review" && (
             <div className="space-y-4">
               <div>
@@ -226,6 +251,10 @@ export default function NewAgentPage() {
                   <div>
                     <dt className="text-sm text-muted-foreground">Tools Enabled</dt>
                     <dd className="font-medium">{formData.toolIds.length}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Data Sources</dt>
+                    <dd className="font-medium">{formData.dataSourceIds.length}</dd>
                   </div>
                 </dl>
               </div>
