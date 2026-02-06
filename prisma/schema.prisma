@@ -1,0 +1,343 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  extensions = [vector]
+}
+
+// ============================================
+// Authentication & Organization Models
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  organizations OrganizationMember[]
+  agents        Agent[]
+  testSessions  TestSession[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members      OrganizationMember[]
+  agents       Agent[]
+  dataSources  DataSource[]
+  customTools  CustomTool[]
+  providers    OrganizationProvider[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String   @default("member") // admin, member
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("organization_members")
+}
+
+// ============================================
+// Provider & Model Models
+// ============================================
+
+model Provider {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  type        String   // openai, anthropic, openrouter, google, xai, ollama
+  baseUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  models       Model[]
+  organizations OrganizationProvider[]
+
+  @@map("providers")
+}
+
+model OrganizationProvider {
+  id             String   @id @default(cuid())
+  organizationId String
+  providerId     String
+  apiKey         String   // Encrypted
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider     Provider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, providerId])
+  @@map("organization_providers")
+}
+
+model Model {
+  id                String   @id @default(cuid())
+  providerId        String
+  modelKey          String   // e.g., "gpt-4-turbo"
+  displayName       String   // e.g., "GPT-4 Turbo"
+  contextWindow     Int      // e.g., 128000
+  maxOutputTokens   Int?     // e.g., 4096
+  inputPricePerM    Float    // Price per 1M input tokens
+  outputPricePerM   Float    // Price per 1M output tokens
+  capabilities      String[] // e.g., ["text", "vision", "function_calling"]
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  agents   Agent[]
+
+  @@unique([providerId, modelKey])
+  @@map("models")
+}
+
+// ============================================
+// Agent Models
+// ============================================
+
+model Agent {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  name           String
+  description    String
+  modelId        String
+  systemPrompt   String   @db.Text
+  temperature    Float    @default(0.7)
+  maxTokens      Int?
+  topP           Float?
+  status         String   @default("draft") // draft, active, archived
+  avatar         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  model        Model             @relation(fields: [modelId], references: [id])
+  dataSources  AgentDataSource[]
+  tools        AgentTool[]
+  testSessions TestSession[]
+
+  @@map("agents")
+}
+
+model AgentDataSource {
+  id               String   @id @default(cuid())
+  agentId          String
+  dataSourceId     String
+  topK             Int      @default(5)
+  similarityThreshold Float @default(0.7)
+  createdAt        DateTime @default(now())
+
+  agent      Agent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  dataSource DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, dataSourceId])
+  @@map("agent_data_sources")
+}
+
+model AgentTool {
+  id            String   @id @default(cuid())
+  agentId       String
+  builtInToolId String?
+  customToolId  String?
+  config        Json?    // Tool-specific configuration
+  createdAt     DateTime @default(now())
+
+  agent        Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  builtInTool  BuiltInTool? @relation(fields: [builtInToolId], references: [id], onDelete: Cascade)
+  customTool   CustomTool?  @relation(fields: [customToolId], references: [id], onDelete: Cascade)
+
+  @@map("agent_tools")
+}
+
+// ============================================
+// Data Source Models
+// ============================================
+
+model DataSource {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  type           String   // file, web, api
+  fileType       String?  // pdf, docx, txt, md
+  fileUrl        String?  // Vercel Blob URL
+  fileSize       Int?
+  status         String   @default("pending") // pending, processing, indexed, failed
+  chunkingStrategy String @default("fixed-size") // fixed-size, sentence, recursive, semantic
+  chunkSize      Int      @default(1000)
+  chunkOverlap   Int      @default(200)
+  indexingStrategy String @default("vector") // vector, bm25, hybrid
+  embeddingModel String   @default("text-embedding-3-small")
+  totalChunks    Int      @default(0)
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  chunks       Chunk[]
+  agents       AgentDataSource[]
+
+  @@map("data_sources")
+}
+
+model Chunk {
+  id           String                     @id @default(cuid())
+  dataSourceId String
+  content      String                     @db.Text
+  embedding    Unsupported("vector(1536)")?
+  metadata     Json?                      // Page number, section, etc.
+  position     Int                        // Position in document
+  createdAt    DateTime                   @default(now())
+
+  dataSource DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+
+  @@map("chunks")
+}
+
+// ============================================
+// Tool Models
+// ============================================
+
+model BuiltInTool {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  description String
+  category    String   // search, math, datetime, etc.
+  type        String   @default("built-in") // built-in, mcp-local, mcp-remote
+  config      Json?    // Type-specific configuration
+  schema      Json     // OpenAI function schema
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  agents AgentTool[]
+
+  @@map("built_in_tools")
+}
+
+model CustomTool {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  displayName    String
+  description    String
+  type           String   // api, webhook, code
+  config         Json     // API endpoint, headers, etc.
+  schema         Json     // OpenAI function schema
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agents       AgentTool[]
+
+  @@unique([organizationId, name])
+  @@map("custom_tools")
+}
+
+// ============================================
+// Testing Models
+// ============================================
+
+model TestSession {
+  id        String   @id @default(cuid())
+  agentId   String
+  userId    String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agent    Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages TestMessage[]
+
+  @@map("test_sessions")
+}
+
+model TestMessage {
+  id              String   @id @default(cuid())
+  sessionId       String
+  role            String   // user, assistant, system
+  content         String   @db.Text
+  inputTokens     Int?
+  outputTokens    Int?
+  cost            Float?
+  responseTime    Int?     // milliseconds
+  retrievedChunks Json?    // Array of chunks with scores
+  toolCalls       Json?    // Array of tool calls
+  createdAt       DateTime @default(now())
+
+  session TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("test_messages")
+}

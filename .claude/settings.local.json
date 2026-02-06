@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm list:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest init -y)",
+      "Bash(npx shadcn@latest init --defaults)",
+      "Bash(npx shadcn@latest add button form input card dialog table tabs select textarea toast dropdown-menu avatar badge separator scroll-area label -y)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(if not exist docs mkdir docs)"
+    ]
+  }
+}
