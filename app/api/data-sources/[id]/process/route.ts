@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
 import { dataSourcePipeline } from "@/lib/data-sources/pipeline"
 
+export const runtime = "nodejs"
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

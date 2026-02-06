@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db/prisma"
 import { localStorage } from "@/lib/data-sources/storage/local-storage"
 import { processorRegistry } from "@/lib/data-sources/processors/registry"
 
+export const runtime = "nodejs"
+
 export async function GET(req: Request) {
   try {
     const session = await auth()

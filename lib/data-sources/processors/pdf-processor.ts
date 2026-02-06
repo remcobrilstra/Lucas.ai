@@ -1,5 +1,6 @@
 import type { DocumentProcessor, FileType } from "../types"
 import fs from "fs/promises"
+import { createRequire } from "module"
 
 /**
  * PDF Processor
@@ -8,8 +9,9 @@ import fs from "fs/promises"
 export class PDFProcessor implements DocumentProcessor {
   async extractText(filePath: string): Promise<string> {
     const buffer = await fs.readFile(filePath)
-    // Lazy-load to avoid Next.js bundler evaluating pdf-parse during route import.
-    const { default: pdfParse } = await import("pdf-parse")
+    // Lazy-load via Node require to avoid ESM/CJS interop issues.
+    const require = createRequire(import.meta.url)
+    const pdfParse = require("pdf-parse") as (data: Buffer) => Promise<{ text: string }>
     const data = await pdfParse(buffer)
     return data.text
   }
