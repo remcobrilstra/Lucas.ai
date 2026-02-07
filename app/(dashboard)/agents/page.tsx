@@ -90,15 +90,22 @@ export default function AgentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Agents</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-4xl font-bold" style={{
+            background: 'linear-gradient(135deg, hsl(22 60% 18%) 0%, hsl(15 70% 48%) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>Agents</h1>
+          <p className="mt-2 font-medium" style={{ color: 'hsl(20 50% 35%)' }}>
             Create and manage your AI agents
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="shadow-lg font-semibold" style={{
+          background: 'linear-gradient(135deg, hsl(15 75% 55%) 0%, hsl(15 70% 48%) 100%)'
+        }}>
           <Link href="/agents/new">
             <Plus className="mr-2 h-4 w-4" />
             Create Agent
@@ -109,12 +116,13 @@ export default function AgentsPage() {
       {agents.length > 0 && (
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'hsl(15 70% 48%)' }} />
             <Input
               placeholder="Search agents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 border-amber-300 focus:border-terracotta-500 bg-white/80 font-medium"
+              style={{ color: 'hsl(20 50% 35%)' }}
             />
           </div>
         </div>
@@ -128,16 +136,26 @@ export default function AgentsPage() {
         </div>
       ) : agents.length > 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No agents found matching your search.</p>
+          <p className="font-medium" style={{ color: 'hsl(20 50% 45%)' }}>No agents found matching your search.</p>
         </div>
       ) : (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
+        <div className="text-center py-16 border-2 border-dashed rounded-2xl shadow-lg" style={{
+          borderColor: 'hsl(35 100% 85%)',
+          background: 'linear-gradient(135deg, hsl(36 100% 93%) 0%, hsl(24 100% 95%) 100%)'
+        }}>
           <div className="mx-auto max-w-md">
-            <h3 className="font-semibold text-lg mb-2">No agents yet</h3>
-            <p className="text-muted-foreground mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg" style={{
+              background: 'linear-gradient(135deg, hsl(32 98% 56%) 0%, hsl(15 75% 55%) 100%)'
+            }}>
+              <Bot className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="font-bold text-xl mb-2" style={{ color: 'hsl(22 60% 18%)' }}>No agents yet</h3>
+            <p className="mb-6 font-medium" style={{ color: 'hsl(20 50% 35%)' }}>
               Create your first AI agent to get started with Lucas.ai
             </p>
-            <Button asChild>
+            <Button asChild className="shadow-lg font-semibold" style={{
+              background: 'linear-gradient(135deg, hsl(15 75% 55%) 0%, hsl(15 70% 48%) 100%)'
+            }}>
               <Link href="/agents/new">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Agent

@@ -13,7 +13,9 @@ export default function DashboardLayout({
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-y-auto bg-background p-6">
+          <main className="flex-1 overflow-y-auto p-6" style={{
+            background: 'linear-gradient(135deg, hsl(24 100% 97%) 0%, hsl(30 67% 97%) 100%)'
+          }}>
             {children}
           </main>
         </div>

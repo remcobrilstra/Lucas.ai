@@ -69,17 +69,24 @@ function LoginForm() {
   }
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
-        <CardDescription className="text-center">
+    <Card className="shadow-2xl border-amber-200" style={{
+      background: 'linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(30 54% 94%) 100%)'
+    }}>
+      <CardHeader className="space-y-2 border-b" style={{ borderColor: 'hsl(30 45% 88%)' }}>
+        <CardTitle className="text-3xl font-bold text-center" style={{
+          background: 'linear-gradient(135deg, hsl(22 60% 18%) 0%, hsl(15 70% 48%) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>Welcome back</CardTitle>
+        <CardDescription className="text-center font-medium" style={{ color: 'hsl(20 50% 45%)' }}>
           Sign in to your Lucas.ai account
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="font-semibold" style={{ color: 'hsl(20 50% 35%)' }}>Email</Label>
             <Input
               id="email"
               type="email"
@@ -88,10 +95,11 @@ function LoginForm() {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
               disabled={isLoading}
+              className="border-amber-300 focus:border-terracotta-500 bg-white/80 font-medium"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="font-semibold" style={{ color: 'hsl(20 50% 35%)' }}>Password</Label>
             <Input
               id="password"
               type="password"
@@ -99,30 +107,37 @@ function LoginForm() {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
               disabled={isLoading}
+              className="border-amber-300 focus:border-terracotta-500 bg-white/80 font-medium"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full shadow-lg font-semibold" disabled={isLoading} style={{
+            background: 'linear-gradient(135deg, hsl(15 75% 55%) 0%, hsl(15 70% 48%) 100%)'
+          }}>
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
 
         {process.env.NEXT_PUBLIC_GOOGLE_ENABLED && (
           <>
-            <div className="relative my-4">
+            <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t" style={{ borderColor: 'hsl(30 45% 88%)' }} />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                <span className="px-3 font-semibold" style={{
+                  background: 'linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(30 54% 94%) 100%)',
+                  color: 'hsl(20 50% 45%)'
+                }}>Or continue with</span>
               </div>
             </div>
 
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full border-amber-300 hover:bg-amber-50 font-semibold"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
+              style={{ color: 'hsl(20 50% 35%)' }}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -147,10 +162,10 @@ function LoginForm() {
           </>
         )}
       </CardContent>
-      <CardFooter>
-        <p className="text-sm text-center w-full text-muted-foreground">
+      <CardFooter className="border-t pt-6" style={{ borderColor: 'hsl(30 45% 88%)' }}>
+        <p className="text-sm text-center w-full font-medium" style={{ color: 'hsl(20 50% 45%)' }}>
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-primary hover:underline font-medium">
+          <Link href="/register" className="hover:underline font-bold" style={{ color: 'hsl(15 70% 48%)' }}>
             Sign up
           </Link>
         </p>

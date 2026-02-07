@@ -26,49 +26,73 @@ interface AgentCardProps {
 
 export function AgentCard({ agent, onDelete }: AgentCardProps) {
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
+    <Card className="flex flex-col shadow-lg border-amber-200" style={{
+      background: 'linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(30 54% 94%) 100%)'
+    }}>
+      <CardHeader className="border-b" style={{ borderColor: 'hsl(30 45% 88%)' }}>
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Bot className="h-5 w-5 text-primary" />
+            <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-md" style={{
+              background: 'linear-gradient(135deg, hsl(32 98% 56%) 0%, hsl(15 75% 55%) 100%)'
+            }}>
+              <Bot className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold">{agent.name}</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-bold" style={{ color: 'hsl(22 60% 18%)' }}>{agent.name}</h3>
+              <p className="text-xs font-medium" style={{ color: 'hsl(20 50% 45%)' }}>
                 {agent.model.provider.displayName} · {agent.model.displayName}
               </p>
             </div>
           </div>
-          <Badge variant={agent.status === "active" ? "default" : "secondary"}>
+          <Badge
+            variant={agent.status === "active" ? "default" : "secondary"}
+            className="font-semibold shadow-sm"
+            style={agent.status === "active" ? {
+              background: 'linear-gradient(135deg, hsl(120 60% 50%) 0%, hsl(120 55% 45%) 100%)',
+              color: 'white'
+            } : {
+              background: 'hsl(30 45% 88%)',
+              color: 'hsl(20 50% 35%)'
+            }}
+          >
             {agent.status}
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1">
-        <p className="text-sm text-muted-foreground line-clamp-2">{agent.description}</p>
+      <CardContent className="flex-1 pt-4">
+        <p className="text-sm font-medium line-clamp-2" style={{ color: 'hsl(20 50% 35%)' }}>{agent.description}</p>
 
         <div className="flex gap-4 mt-4 text-sm">
-          <div>
-            <span className="text-muted-foreground">Data Sources:</span>{" "}
-            <span className="font-medium">{agent._count.dataSources}</span>
+          <div className="px-3 py-1.5 rounded-lg" style={{
+            background: 'linear-gradient(135deg, hsl(36 100% 93%) 0%, hsl(24 100% 95%) 100%)',
+            border: '1px solid hsl(35 100% 85%)'
+          }}>
+            <span className="font-medium" style={{ color: 'hsl(20 50% 45%)' }}>Data Sources:</span>{" "}
+            <span className="font-bold" style={{ color: 'hsl(15 70% 48%)' }}>{agent._count.dataSources}</span>
           </div>
-          <div>
-            <span className="text-muted-foreground">Tools:</span>{" "}
-            <span className="font-medium">{agent._count.tools}</span>
+          <div className="px-3 py-1.5 rounded-lg" style={{
+            background: 'linear-gradient(135deg, hsl(36 100% 93%) 0%, hsl(24 100% 95%) 100%)',
+            border: '1px solid hsl(35 100% 85%)'
+          }}>
+            <span className="font-medium" style={{ color: 'hsl(20 50% 45%)' }}>Tools:</span>{" "}
+            <span className="font-bold" style={{ color: 'hsl(15 70% 48%)' }}>{agent._count.tools}</span>
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="flex gap-2">
-        <Button asChild variant="default" size="sm" className="flex-1">
+      <CardFooter className="flex gap-2 border-t pt-4" style={{ borderColor: 'hsl(30 45% 88%)' }}>
+        <Button asChild size="sm" className="flex-1 shadow-md font-semibold" style={{
+          background: 'linear-gradient(135deg, hsl(15 75% 55%) 0%, hsl(15 70% 48%) 100%)'
+        }}>
           <Link href={`/agents/${agent.id}/test`}>
             <Play className="mr-2 h-4 w-4" />
             Test
           </Link>
         </Button>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="border-amber-300 hover:bg-amber-50 font-semibold" style={{
+          color: 'hsl(20 50% 35%)'
+        }}>
           <Link href={`/agents/${agent.id}/edit`}>
             <Edit className="h-4 w-4" />
           </Link>
@@ -77,6 +101,8 @@ export function AgentCard({ agent, onDelete }: AgentCardProps) {
           variant="outline"
           size="sm"
           onClick={() => onDelete?.(agent.id)}
+          className="border-amber-300 hover:bg-red-50 font-semibold"
+          style={{ color: 'hsl(0 70% 50%)' }}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
