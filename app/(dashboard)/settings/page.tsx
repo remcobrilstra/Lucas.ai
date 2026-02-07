@@ -94,6 +94,30 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </Link>
+
+        <Link href="/settings/playground" onMouseEnter={() => setHoveredCard('playground')} onMouseLeave={() => setHoveredCard(null)}>
+          <Card className="cursor-pointer transition-all shadow-lg border-amber-200 h-full" style={{
+            background: hoveredCard === 'playground'
+              ? 'linear-gradient(135deg, hsl(36 100% 93%) 0%, hsl(24 100% 95%) 100%)'
+              : 'linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(30 54% 94%) 100%)',
+            transform: hoveredCard === 'playground' ? 'translateY(-2px)' : 'none'
+          }}>
+            <CardHeader className="border-b" style={{ borderColor: 'hsl(30 45% 88%)' }}>
+              <CardTitle className="text-xl font-bold" style={{ color: 'hsl(22 60% 18%)' }}>Playground</CardTitle>
+              <CardDescription className="font-medium" style={{ color: 'hsl(20 50% 45%)' }}>
+                Configure playground models
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium" style={{ color: 'hsl(20 50% 35%)' }}>
+                  Set available models and defaults
+                </p>
+                <ArrowRight className="h-5 w-5" style={{ color: 'hsl(15 70% 48%)' }} />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   )

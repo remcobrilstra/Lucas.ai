@@ -29,9 +29,10 @@ interface ModelSelectorProps {
   value?: string
   onValueChange: (value: string) => void
   disabled?: boolean
+  filterModelIds?: string[] // Optional: only show these model IDs
 }
 
-export function ModelSelector({ value, onValueChange, disabled }: ModelSelectorProps) {
+export function ModelSelector({ value, onValueChange, disabled, filterModelIds }: ModelSelectorProps) {
   const [models, setModels] = useState<Model[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -51,8 +52,13 @@ export function ModelSelector({ value, onValueChange, disabled }: ModelSelectorP
     }
   }
 
+  // Filter models if filterModelIds is provided
+  const filteredModels = filterModelIds
+    ? models.filter((model) => filterModelIds.includes(model.id))
+    : models
+
   // Group models by provider
-  const groupedModels = models.reduce((acc, model) => {
+  const groupedModels = filteredModels.reduce((acc, model) => {
     const providerName = model.provider.displayName
     if (!acc[providerName]) {
       acc[providerName] = []
@@ -61,7 +67,7 @@ export function ModelSelector({ value, onValueChange, disabled }: ModelSelectorP
     return acc
   }, {} as Record<string, Model[]>)
 
-  const selectedModel = models.find((m) => m.id === value)
+  const selectedModel = filteredModels.find((m) => m.id === value)
 
   return (
     <div className="space-y-4">

@@ -83,7 +83,17 @@ export async function PATCH(
     }
 
     const body = await req.json()
-    const { name, description, chunkingStrategy, chunkSize, chunkOverlap } = body
+    const {
+      name,
+      description,
+      chunkingStrategy,
+      chunkSize,
+      chunkOverlap,
+      websiteUrl,
+      crawlDepth,
+      maxPages,
+      crawlFrequency,
+    } = body
 
     const dataSource = await prisma.dataSource.updateMany({
       where: {
@@ -96,6 +106,10 @@ export async function PATCH(
         chunkingStrategy,
         chunkSize,
         chunkOverlap,
+        websiteUrl,
+        crawlDepth,
+        maxPages,
+        crawlFrequency,
       },
     })
 

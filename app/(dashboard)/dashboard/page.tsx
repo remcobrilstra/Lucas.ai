@@ -121,11 +121,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1
-            className="text-4xl font-bold"
+            className="text-2xl sm:text-3xl lg:text-4xl font-bold"
             style={{
               background: "linear-gradient(135deg, hsl(22 60% 18%) 0%, hsl(15 70% 48%) 100%)",
               WebkitBackgroundClip: "text",
@@ -135,16 +135,16 @@ export default function DashboardPage() {
           >
             Analytics Dashboard
           </h1>
-          <p className="mt-2 font-medium" style={{ color: "hsl(20 50% 35%)" }}>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base font-medium" style={{ color: "hsl(20 50% 35%)" }}>
             Token usage and cost insights across all models
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-start sm:self-auto">
           {[7, 30, 90].map((days) => (
             <button
               key={days}
               onClick={() => setTimeRange(days)}
-              className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
+              className="px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-all touch-manipulation"
               style={{
                 background:
                   timeRange === days
@@ -160,7 +160,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card
           className="shadow-lg border-amber-200"
           style={{
@@ -280,7 +280,7 @@ export default function DashboardPage() {
 
       {analytics && analytics.modelUsage.length > 0 ? (
         <>
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
             <Card
               className="shadow-lg border-amber-200"
               style={{
@@ -292,31 +292,35 @@ export default function DashboardPage() {
                   Token Usage by Model
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analytics.modelUsage}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 45% 88%)" />
-                    <XAxis
-                      dataKey="modelName"
-                      tick={{ fill: "hsl(20 50% 35%)", fontSize: 12 }}
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                    />
-                    <YAxis tick={{ fill: "hsl(20 50% 35%)", fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "white",
-                        border: "1px solid hsl(30 45% 88%)",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number) => formatNumber(value)}
-                    />
-                    <Legend />
-                    <Bar dataKey="inputTokens" name="Input Tokens" fill="hsl(15 75% 55%)" />
-                    <Bar dataKey="outputTokens" name="Output Tokens" fill="hsl(32 98% 56%)" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <div className="min-w-[500px]">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={analytics.modelUsage}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 45% 88%)" />
+                        <XAxis
+                          dataKey="modelName"
+                          tick={{ fill: "hsl(20 50% 35%)", fontSize: 12 }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                        />
+                        <YAxis tick={{ fill: "hsl(20 50% 35%)", fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            background: "white",
+                            border: "1px solid hsl(30 45% 88%)",
+                            borderRadius: "8px",
+                          }}
+                          formatter={(value: number | undefined) => formatNumber(value || 0)}
+                        />
+                        <Legend />
+                        <Bar dataKey="inputTokens" name="Input Tokens" fill="hsl(15 75% 55%)" />
+                        <Bar dataKey="outputTokens" name="Output Tokens" fill="hsl(32 98% 56%)" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -331,7 +335,7 @@ export default function DashboardPage() {
                   Cost Distribution
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4 sm:pt-6">
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -340,14 +344,14 @@ export default function DashboardPage() {
                       nameKey="modelName"
                       cx="50%"
                       cy="50%"
-                      outerRadius={100}
-                      label={(entry) => `${entry.modelName}: ${formatCost(entry.cost)}`}
+                      outerRadius={window.innerWidth < 640 ? 80 : 100}
+                      label={window.innerWidth >= 640}
                     >
                       {analytics.modelUsage.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => formatCost(value)} />
+                    <Tooltip formatter={(value: number | undefined) => formatCost(value || 0)} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -366,46 +370,50 @@ export default function DashboardPage() {
                   Token Usage Over Time
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={analytics.dailyUsage}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 45% 88%)" />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fill: "hsl(20 50% 35%)", fontSize: 12 }}
-                      tickFormatter={formatDate}
-                    />
-                    <YAxis tick={{ fill: "hsl(20 50% 35%)", fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{
-                        background: "white",
-                        border: "1px solid hsl(30 45% 88%)",
-                        borderRadius: "8px",
-                      }}
-                      labelFormatter={formatDate}
-                      formatter={(value: number) => formatNumber(value)}
-                    />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="inputTokens"
-                      name="Input Tokens"
-                      stackId="1"
-                      stroke="hsl(15 75% 55%)"
-                      fill="hsl(15 75% 55%)"
-                      fillOpacity={0.6}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="outputTokens"
-                      name="Output Tokens"
-                      stackId="1"
-                      stroke="hsl(32 98% 56%)"
-                      fill="hsl(32 98% 56%)"
-                      fillOpacity={0.6}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <div className="min-w-[500px]">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={analytics.dailyUsage}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(30 45% 88%)" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fill: "hsl(20 50% 35%)", fontSize: 12 }}
+                          tickFormatter={formatDate}
+                        />
+                        <YAxis tick={{ fill: "hsl(20 50% 35%)", fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            background: "white",
+                            border: "1px solid hsl(30 45% 88%)",
+                            borderRadius: "8px",
+                          }}
+                          labelFormatter={(label) => formatDate(String(label))}
+                          formatter={(value: number | undefined) => formatNumber(value || 0)}
+                        />
+                        <Legend />
+                        <Area
+                          type="monotone"
+                          dataKey="inputTokens"
+                          name="Input Tokens"
+                          stackId="1"
+                          stroke="hsl(15 75% 55%)"
+                          fill="hsl(15 75% 55%)"
+                          fillOpacity={0.6}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="outputTokens"
+                          name="Output Tokens"
+                          stackId="1"
+                          stroke="hsl(32 98% 56%)"
+                          fill="hsl(32 98% 56%)"
+                          fillOpacity={0.6}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -421,54 +429,54 @@ export default function DashboardPage() {
                 Model Performance Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="space-y-3 sm:space-y-4">
                 {analytics.modelUsage.map((model, index) => (
                   <div
                     key={model.modelId}
-                    className="flex items-center justify-between p-4 rounded-lg"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg"
                     style={{ background: "hsl(30 60% 97%)" }}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
                       <div
-                        className="h-10 w-10 rounded-lg flex items-center justify-center"
+                        className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{
                           background: CHART_COLORS[index % CHART_COLORS.length],
                         }}
                       >
                         <Bot className="h-5 w-5 text-white" />
                       </div>
-                      <div>
-                        <p className="font-bold" style={{ color: "hsl(22 60% 18%)" }}>
+                      <div className="min-w-0">
+                        <p className="font-bold truncate" style={{ color: "hsl(22 60% 18%)" }}>
                           {model.modelName}
                         </p>
-                        <p className="text-sm font-medium" style={{ color: "hsl(20 50% 45%)" }}>
+                        <p className="text-sm font-medium truncate" style={{ color: "hsl(20 50% 45%)" }}>
                           {model.providerName}
                         </p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-6 text-right">
+                    <div className="grid grid-cols-3 gap-3 sm:gap-6 text-right sm:text-right">
                       <div>
-                        <p className="text-lg font-bold" style={{ color: "hsl(15 70% 48%)" }}>
+                        <p className="text-base sm:text-lg font-bold" style={{ color: "hsl(15 70% 48%)" }}>
                           {formatNumber(model.totalTokens)}
                         </p>
-                        <p className="text-xs font-medium" style={{ color: "hsl(20 50% 45%)" }}>
-                          Total Tokens
+                        <p className="text-[10px] sm:text-xs font-medium" style={{ color: "hsl(20 50% 45%)" }}>
+                          Tokens
                         </p>
                       </div>
                       <div>
-                        <p className="text-lg font-bold" style={{ color: "hsl(15 70% 48%)" }}>
+                        <p className="text-base sm:text-lg font-bold" style={{ color: "hsl(15 70% 48%)" }}>
                           {formatCost(model.cost)}
                         </p>
-                        <p className="text-xs font-medium" style={{ color: "hsl(20 50% 45%)" }}>
-                          Total Cost
+                        <p className="text-[10px] sm:text-xs font-medium" style={{ color: "hsl(20 50% 45%)" }}>
+                          Cost
                         </p>
                       </div>
                       <div>
-                        <p className="text-lg font-bold" style={{ color: "hsl(15 70% 48%)" }}>
+                        <p className="text-base sm:text-lg font-bold" style={{ color: "hsl(15 70% 48%)" }}>
                           {model.messageCount}
                         </p>
-                        <p className="text-xs font-medium" style={{ color: "hsl(20 50% 45%)" }}>
+                        <p className="text-[10px] sm:text-xs font-medium" style={{ color: "hsl(20 50% 45%)" }}>
                           Messages
                         </p>
                       </div>

@@ -37,29 +37,10 @@ export async function POST(
       return NextResponse.json({ error: "Data source not found" }, { status: 404 })
     }
 
-    if (!dataSource.filePath) {
-      return NextResponse.json(
-        { error: "No file associated with data source" },
-        { status: 400 }
-      )
-    }
-
-    // Process in background (non-blocking)
-    // In production, you'd use a job queue like BullMQ
+    // Process entire DataSource (all documents) in background
+    // This works for both "files" and "website" types
     dataSourcePipeline
-      .process(
-        id,
-        dataSource.filePath,
-        dataSource.fileType || "txt",
-        {
-          chunkingStrategy: dataSource.chunkingStrategy as any,
-          chunkSize: dataSource.chunkSize,
-          chunkOverlap: dataSource.chunkOverlap,
-          indexingStrategy: dataSource.indexingStrategy as any,
-          embeddingModel: dataSource.embeddingModel,
-        },
-        orgMember.organizationId
-      )
+      .processDataSource(id)
       .catch((error) => {
         console.error(`Processing failed for ${id}:`, error)
       })

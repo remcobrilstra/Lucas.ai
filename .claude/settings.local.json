@@ -11,7 +11,13 @@
       "Bash(npx prisma migrate dev:*)",
       "Bash(npx tsx:*)",
       "Bash(npx prisma generate:*)",
-      "Bash(if not exist docs mkdir docs)"
+      "Bash(if not exist docs mkdir docs)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(rd /s /q \"prisma\\\\migrations\\\\20260207085245_multi_file_datasources\")",
+      "Bash(ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(echo:*)"
     ]
   }
 }

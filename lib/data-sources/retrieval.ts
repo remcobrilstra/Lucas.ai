@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma"
 import { generateEmbedding } from "./embeddings/registry"
+import type { MetadataRecord } from "./types"
 
 export interface RetrievalOptions {
   dataSourceIds: string[]
@@ -13,7 +14,7 @@ export interface RetrievedChunk {
   id: string
   content: string
   similarity: number
-  metadata?: Record<string, any>
+  metadata?: MetadataRecord
   position: number
   dataSourceId: string
 }
@@ -42,7 +43,7 @@ export async function vectorSearch(
       id: string
       content: string
       similarity: number
-      metadata: Record<string, any> | null
+      metadata: MetadataRecord | null
       position: number
       dataSourceId: string
     }>>`

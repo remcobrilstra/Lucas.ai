@@ -80,11 +80,12 @@ model Organization {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members      OrganizationMember[]
-  agents       Agent[]
-  dataSources  DataSource[]
-  customTools  CustomTool[]
-  providers    OrganizationProvider[]
+  members            OrganizationMember[]
+  agents             Agent[]
+  dataSources        DataSource[]
+  customTools        CustomTool[]
+  providers          OrganizationProvider[]
+  playgroundSettings PlaygroundSettings?
 
   @@map("organizations")
 }
@@ -101,6 +102,19 @@ model OrganizationMember {
 
   @@unique([organizationId, userId])
   @@map("organization_members")
+}
+
+model PlaygroundSettings {
+  id                  String   @id @default(cuid())
+  organizationId      String   @unique
+  defaultModelId      String?  // Default model to use in playground
+  availableModelIds   String[] // List of model IDs available in playground
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("playground_settings")
 }
 
 // ============================================
@@ -228,11 +242,21 @@ model DataSource {
   organizationId String
   name           String
   description    String?
-  type           String   // file, web, api
+  type           String   @default("files") // "files" or "website"
+
+  // Legacy single-file fields (kept for backwards compatibility)
   fileType       String?  // pdf, docx, txt, md
   fileUrl        String?  // Vercel Blob URL
   filePath       String?  // Local filesystem path
   fileSize       Int?
+
+  // Website-specific fields
+  websiteUrl     String?
+  crawlDepth     Int      @default(1)
+  crawlFrequency String?  // "hourly", "daily", "weekly", "monthly"
+  lastCrawledAt  DateTime?
+  maxPages       Int      @default(100)
+
   status         String   @default("pending") // pending, processing, indexed, failed
   chunkingStrategy String @default("fixed-size") // fixed-size, sentence, recursive, semantic
   chunkSize      Int      @default(1000)
@@ -247,6 +271,8 @@ model DataSource {
   organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   chunks       Chunk[]
   agents       AgentDataSource[]
+  documents    Document[]
+  crawlJobs    CrawlJob[]
 
   @@map("data_sources")
 }
@@ -254,6 +280,7 @@ model DataSource {
 model Chunk {
   id           String                     @id @default(cuid())
   dataSourceId String
+  documentId   String?
   content      String                     @db.Text
   embedding    Unsupported("vector(1536)")?
   metadata     Json?                      // Page number, section, etc.
@@ -261,8 +288,72 @@ model Chunk {
   createdAt    DateTime                   @default(now())
 
   dataSource DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  document   Document?  @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  @@index([dataSourceId])
+  @@index([documentId])
   @@map("chunks")
+}
+
+model Document {
+  id               String    @id @default(cuid())
+  dataSourceId     String
+  name             String
+  type             String    // "file" or "webpage"
+
+  // File-specific fields
+  fileType         String?   // pdf, docx, txt, md
+  filePath         String?
+  fileUrl          String?
+  fileSize         Int?
+
+  // Webpage-specific fields
+  pageUrl          String?
+  pageTitle        String?
+  crawlDepth       Int       @default(0)
+
+  // Status
+  status           String    @default("pending") // pending, processing, indexed, failed
+  errorMessage     String?
+  totalChunks      Int       @default(0)
+
+  // Override settings (null = use DataSource defaults)
+  chunkingStrategy String?
+  chunkSize        Int?
+  chunkOverlap     Int?
+  embeddingModel   String?
+
+  metadata         Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  processedAt      DateTime?
+
+  dataSource       DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  chunks           Chunk[]
+
+  @@index([dataSourceId])
+  @@index([status])
+  @@map("documents")
+}
+
+model CrawlJob {
+  id              String    @id @default(cuid())
+  dataSourceId    String
+  status          String    @default("pending") // pending, running, completed, failed
+  startedAt       DateTime?
+  completedAt     DateTime?
+  errorMessage    String?
+  pagesDiscovered Int       @default(0)
+  pagesProcessed  Int       @default(0)
+  pagesFailed     Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  dataSource      DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+
+  @@index([dataSourceId])
+  @@index([status])
+  @@map("crawl_jobs")
 }
 
 // ============================================

@@ -131,10 +131,11 @@ export async function GET(request: NextRequest) {
     }).sort((a, b) => b.totalTokens - a.totalTokens)
 
     // Get counts for dashboard metrics
-    const [agentCount, dataSourceCount, toolCount, sessionCount] = await Promise.all([
+    const [agentCount, dataSourceCount, builtInToolCount, customToolCount, sessionCount] = await Promise.all([
       prisma.agent.count(),
       prisma.dataSource.count(),
-      prisma.tool.count(),
+      prisma.builtInTool.count(),
+      prisma.customTool.count(),
       prisma.testSession.count({
         where: {
           createdAt: {
@@ -143,6 +144,8 @@ export async function GET(request: NextRequest) {
         },
       }),
     ])
+
+    const toolCount = builtInToolCount + customToolCount
 
     return NextResponse.json({
       summary: {

@@ -13,6 +13,22 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Touch-friendly tap targets */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Responsive breakpoint for very small screens */
+@media (min-width: 475px) {
+  .xs\:inline {
+    display: inline;
+  }
+  .xs\:hidden {
+    display: none;
+  }
 }
 
 
@@ -79,14 +95,53 @@ body {
   * {
     @apply border-border;
   }
+
+  html {
+    /* Improve touch scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent text size adjustments on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+  }
+
+  /* Improve tap/click feedback on mobile */
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Ensure inputs don't zoom on iOS */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  @media (min-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 0.875rem;
+    }
   }
 }
 
 .markdown-content {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .markdown-content {
+    font-size: 0.875rem;
+  }
 }
 
 .markdown-content > *:first-child {
@@ -109,6 +164,26 @@ body {
   margin-bottom: 0.5rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.markdown-content h1 {
+  font-size: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .markdown-content h1 {
+    font-size: 1.5rem;
+  }
+}
+
+.markdown-content h2 {
+  font-size: 1.125rem;
+}
+
+@media (min-width: 640px) {
+  .markdown-content h2 {
+    font-size: 1.25rem;
+  }
 }
 
 .markdown-content ul,
@@ -141,6 +216,7 @@ body {
   border-radius: 0.375rem;
   border: 1px solid hsl(15 75% 55% / 0.2);
   font-weight: 500;
+  word-break: break-word;
 }
 
 .markdown-content pre {
@@ -150,17 +226,27 @@ body {
   overflow-x: auto;
   border-radius: 0.625rem;
   border: 1px solid hsl(30 45% 88%);
+  -webkit-overflow-scrolling: touch;
 }
 
 .markdown-content pre code {
   background: transparent;
-  padding: 0.875rem;
+  padding: 0.75rem;
   border-radius: 0.5rem;
   display: block;
   border: none;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .markdown-content pre code {
+    padding: 0.875rem;
+    font-size: 0.8125rem;
+  }
 }
 
 .markdown-content a {
   color: inherit;
   text-decoration: underline;
+  word-break: break-word;
 }
