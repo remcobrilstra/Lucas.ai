@@ -1,7 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Select,
   SelectContent,
@@ -109,6 +109,7 @@ const buildPlaceholderSchema = (name: string, description: string) => {
 export default function ToolsPage() {
   const [tools, setTools] = useState<Tool[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTool, setEditingTool] = useState<Tool | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -146,6 +147,26 @@ export default function ToolsPage() {
   useEffect(() => {
     loadTools()
   }, [loadTools])
+
+  const filteredTools = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+    if (!normalizedQuery) return tools
+
+    return tools.filter((tool) => {
+      const searchable = [
+        tool.name,
+        tool.displayName,
+        tool.description,
+        tool.category,
+        tool.type,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+
+      return searchable.includes(normalizedQuery)
+    })
+  }, [searchQuery, tools])
 
   const handleCreate = () => {
     setEditingTool(null)
@@ -316,69 +337,100 @@ export default function ToolsPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {tools.map((tool) => {
-          const Icon = iconMap[tool.category] || Wrench
-          const TypeIcon = typeIcons[tool.type] || Wrench
-
-          return (
-            <Card key={tool.id} className={!tool.isActive ? "opacity-60" : ""}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{tool.displayName}</CardTitle>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {tool.category}
-                        </Badge>
-                        <Badge className={`text-xs ${typeColors[tool.type]}`}>
-                          <TypeIcon className="h-3 w-3 mr-1" />
-                          {tool.type}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <CardDescription className="mt-2">{tool.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleEdit(tool)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleDeleteClick(tool)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      {tools.length === 0 && (
+      {tools.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No tools available</p>
           <Button onClick={handleCreate} className="mt-4">
             <Plus className="h-4 w-4 mr-2" />
             Create your first tool
           </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search tools by name, category, or type"
+                className="pl-9"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Showing {filteredTools.length} of {tools.length}
+            </div>
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tool</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTools.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                    No tools match your search.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTools.map((tool) => {
+                  const Icon = iconMap[tool.category] || Wrench
+                  const TypeIcon = typeIcons[tool.type] || Wrench
+
+                  return (
+                    <TableRow key={tool.id} className={!tool.isActive ? "opacity-60" : ""}>
+                      <TableCell>
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
+                            <Icon className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{tool.displayName}</div>
+                            <div className="text-sm text-muted-foreground">{tool.description}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {tool.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`text-xs ${typeColors[tool.type]}`}>
+                          <TypeIcon className="h-3 w-3 mr-1" />
+                          {tool.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {tool.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(tool)}>
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDeleteClick(tool)}>
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
+              )}
+            </TableBody>
+          </Table>
         </div>
       )}
 
