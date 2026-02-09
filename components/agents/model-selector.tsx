@@ -20,6 +20,7 @@ interface Model {
   inputPricePerM: number
   outputPricePerM: number
   capabilities: string[]
+  defaultTemperature: number
   provider: {
     displayName: string
   }
@@ -28,11 +29,12 @@ interface Model {
 interface ModelSelectorProps {
   value?: string
   onValueChange: (value: string) => void
+  onModelSelect?: (model: Model) => void // Callback when model is selected with full model data
   disabled?: boolean
   filterModelIds?: string[] // Optional: only show these model IDs
 }
 
-export function ModelSelector({ value, onValueChange, disabled, filterModelIds }: ModelSelectorProps) {
+export function ModelSelector({ value, onValueChange, onModelSelect, disabled, filterModelIds }: ModelSelectorProps) {
   const [models, setModels] = useState<Model[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -69,9 +71,17 @@ export function ModelSelector({ value, onValueChange, disabled, filterModelIds }
 
   const selectedModel = filteredModels.find((m) => m.id === value)
 
+  const handleValueChange = (modelId: string) => {
+    onValueChange(modelId)
+    const model = filteredModels.find((m) => m.id === modelId)
+    if (model && onModelSelect) {
+      onModelSelect(model)
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <Select value={value} onValueChange={onValueChange} disabled={disabled || loading}>
+      <Select value={value} onValueChange={handleValueChange} disabled={disabled || loading}>
         <SelectTrigger>
           <SelectValue placeholder={loading ? "Loading models..." : "Select a model"} />
         </SelectTrigger>
@@ -115,6 +125,10 @@ export function ModelSelector({ value, onValueChange, disabled, filterModelIds }
             <div>
               <p className="text-muted-foreground">Provider</p>
               <p className="font-medium">{selectedModel.provider.displayName}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Default Temperature</p>
+              <p className="font-medium">{selectedModel.defaultTemperature}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Input Price</p>

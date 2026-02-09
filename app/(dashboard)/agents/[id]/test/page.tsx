@@ -1,25 +1,14 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { MessageList } from "@/components/chat/message-list"
 import { MessageInput } from "@/components/chat/message-input"
 import { DebugPanel } from "@/components/chat/debug-panel"
 import { useToast } from "@/hooks/use-toast"
 import { useChatStream } from "@/hooks/use-chat-stream"
-import type { ToolCall } from "@/lib/ai/types"
 import { ArrowLeft, PanelRightClose, PanelRightOpen } from "lucide-react"
 import Link from "next/link"
-
-interface DebugInfo {
-  usage?: {
-    inputTokens: number
-    outputTokens: number
-  }
-  cost?: number
-  responseTime?: number
-  toolCalls?: ToolCall[]
-}
 
 export default function TestAgentPage({
   params,
@@ -28,11 +17,19 @@ export default function TestAgentPage({
 }) {
   const { id } = use(params)
   const { toast } = useToast()
-  const [debugInfo] = useState<DebugInfo | null>(null)
-  const [showDebug, setShowDebug] = useState(true)
+  const [showDebug, setShowDebug] = useState(false)
+  const [contextWindowTokens, setContextWindowTokens] = useState<number | null>(null)
 
-  const { messages, isLoading, streamingMessage, sendMessage } = useChatStream({
+  const {
+    messages,
+    isLoading,
+    streamingMessage,
+    sendMessage,
+    debugInfo,
+    sessionUsage,
+  } = useChatStream({
     agentId: id,
+    stream: false,
     onError: (error) => {
       toast({
         title: "Error",
@@ -41,6 +38,41 @@ export default function TestAgentPage({
       })
     },
   })
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadAgentContextWindow = async () => {
+      try {
+        const response = await fetch(`/api/agents/${id}`)
+
+        if (!response.ok) {
+          throw new Error("Failed to load agent")
+        }
+
+        const data = await response.json()
+        const contextWindow = data?.model?.contextWindow
+
+        if (isActive) {
+          setContextWindowTokens(
+            typeof contextWindow === "number" ? contextWindow : null
+          )
+        }
+      } catch (error) {
+        console.error("Failed to load agent context window:", error)
+        if (isActive) {
+          setContextWindowTokens(null)
+        }
+      }
+    }
+
+    setContextWindowTokens(null)
+    loadAgentContextWindow()
+
+    return () => {
+      isActive = false
+    }
+  }, [id])
 
   // Add streaming message to display
   const displayMessages = streamingMessage
@@ -97,7 +129,13 @@ export default function TestAgentPage({
           <MessageInput onSend={sendMessage} disabled={isLoading} />
         </div>
 
-        {showDebug && <DebugPanel debugInfo={debugInfo} />}
+        {showDebug && (
+          <DebugPanel
+            debugInfo={debugInfo}
+            sessionUsage={messages.length > 0 ? sessionUsage : null}
+            contextWindowTokens={contextWindowTokens}
+          />
+        )}
       </div>
     </div>
   )

@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     const response = await aiProvider.chatCompletion({
       model: model.modelKey,
       messages: chatMessages,
-      temperature: typeof temperature === "number" ? temperature : 0.7,
+      temperature: typeof temperature === "number" ? temperature : model.defaultTemperature,
     })
 
     const responseTime = Date.now() - startTime

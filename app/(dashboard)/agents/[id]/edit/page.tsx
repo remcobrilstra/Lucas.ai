@@ -253,10 +253,30 @@ export default function EditAgentPage({
           )}
 
           {currentStep === "model" && (
-            <ModelSelector
-              value={formData.modelId}
-              onValueChange={(value) => setFormData({ ...formData, modelId: value })}
-            />
+            <>
+              <ModelSelector
+                value={formData.modelId}
+                onValueChange={(value) => setFormData({ ...formData, modelId: value })}
+                onModelSelect={(model) => setFormData({ ...formData, modelId: model.id, temperature: model.defaultTemperature })}
+              />
+              <div className="space-y-2">
+                <Label htmlFor="temperature">
+                  Temperature Override (Optional)
+                </Label>
+                <Input
+                  id="temperature"
+                  type="number"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={formData.temperature}
+                  onChange={(e) => setFormData({ ...formData, temperature: parseFloat(e.target.value) || 1.0 })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Controls randomness. Higher values (e.g., 1.5) make output more creative, lower values (e.g., 0.3) make it more deterministic.
+                </p>
+              </div>
+            </>
           )}
 
           {currentStep === "prompt" && (

@@ -77,6 +77,7 @@ async function main() {
       inputPricePerM: 10.0,
       outputPricePerM: 30.0,
       capabilities: ['text', 'vision', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     {
       providerId: openai!.id,
@@ -87,6 +88,7 @@ async function main() {
       inputPricePerM: 5.0,
       outputPricePerM: 15.0,
       capabilities: ['text', 'vision', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     {
       providerId: openai!.id,
@@ -97,6 +99,7 @@ async function main() {
       inputPricePerM: 0.15,
       outputPricePerM: 0.6,
       capabilities: ['text', 'vision', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     {
       providerId: openai!.id,
@@ -107,6 +110,7 @@ async function main() {
       inputPricePerM: 0.5,
       outputPricePerM: 1.5,
       capabilities: ['text', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     // Anthropic Models
     {
@@ -118,6 +122,7 @@ async function main() {
       inputPricePerM: 15.0,
       outputPricePerM: 75.0,
       capabilities: ['text', 'vision', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     {
       providerId: anthropic!.id,
@@ -128,6 +133,7 @@ async function main() {
       inputPricePerM: 3.0,
       outputPricePerM: 15.0,
       capabilities: ['text', 'vision', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     {
       providerId: anthropic!.id,
@@ -138,6 +144,7 @@ async function main() {
       inputPricePerM: 1.0,
       outputPricePerM: 5.0,
       capabilities: ['text', 'vision', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     // Google Models
     {
@@ -149,6 +156,7 @@ async function main() {
       inputPricePerM: 0.0,
       outputPricePerM: 0.0,
       capabilities: ['text', 'vision', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     {
       providerId: google!.id,
@@ -159,6 +167,7 @@ async function main() {
       inputPricePerM: 1.25,
       outputPricePerM: 5.0,
       capabilities: ['text', 'vision', 'function_calling'],
+      defaultTemperature: 1.0,
     },
     // xAI Models
     {
@@ -170,6 +179,7 @@ async function main() {
       inputPricePerM: 2.0,
       outputPricePerM: 10.0,
       capabilities: ['text', 'function_calling'],
+      defaultTemperature: 1.0,
     },
   ]
 

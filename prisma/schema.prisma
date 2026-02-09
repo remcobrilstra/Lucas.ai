@@ -162,6 +162,7 @@ model Model {
   inputPricePerM    Float    // Price per 1M input tokens
   outputPricePerM   Float    // Price per 1M output tokens
   capabilities      String[] // e.g., ["text", "vision", "function_calling"]
+  defaultTemperature Float   @default(1.0) // Default temperature for this model
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -185,7 +186,7 @@ model Agent {
   description    String
   modelId        String
   systemPrompt   String   @db.Text
-  temperature    Float    @default(0.7)
+  temperature    Float    @default(1.0)
   maxTokens      Int?
   topP           Float?
   status         String   @default("draft") // draft, active, archived

@@ -35,7 +35,7 @@ export default function NewAgentPage() {
     description: "",
     modelId: "",
     systemPrompt: "You are a helpful AI assistant. Provide clear, accurate, and concise responses.",
-    temperature: 0.7,
+    temperature: 1.0, // Default temperature, will be updated when model is selected
     toolIds: [] as string[],
     dataSourceIds: [] as string[],
   })
@@ -208,10 +208,30 @@ export default function NewAgentPage() {
           )}
 
           {currentStep === "model" && (
-            <ModelSelector
-              value={formData.modelId}
-              onValueChange={(value) => setFormData({ ...formData, modelId: value })}
-            />
+            <>
+              <ModelSelector
+                value={formData.modelId}
+                onValueChange={(value) => setFormData({ ...formData, modelId: value })}
+                onModelSelect={(model) => setFormData({ ...formData, modelId: model.id, temperature: model.defaultTemperature })}
+              />
+              <div className="space-y-2">
+                <Label htmlFor="temperature">
+                  Temperature Override (Optional)
+                </Label>
+                <Input
+                  id="temperature"
+                  type="number"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={formData.temperature}
+                  onChange={(e) => setFormData({ ...formData, temperature: parseFloat(e.target.value) || 1.0 })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Controls randomness. Higher values (e.g., 1.5) make output more creative, lower values (e.g., 0.3) make it more deterministic.
+                </p>
+              </div>
+            </>
           )}
 
           {currentStep === "prompt" && (

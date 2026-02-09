@@ -20,10 +20,27 @@ interface DebugInfo {
 
 interface DebugPanelProps {
   debugInfo: DebugInfo | null
+  sessionUsage?: {
+    inputTokens: number
+    outputTokens: number
+    cost: number
+  } | null
+  contextWindowTokens?: number | null
 }
 
-export function DebugPanel({ debugInfo }: DebugPanelProps) {
-  if (!debugInfo) {
+export function DebugPanel({ debugInfo, sessionUsage, contextWindowTokens }: DebugPanelProps) {
+  const hasSessionUsage =
+    !!sessionUsage &&
+    sessionUsage.inputTokens + sessionUsage.outputTokens > 0
+  const latestUsageTokens = debugInfo?.usage
+    ? debugInfo.usage.inputTokens + debugInfo.usage.outputTokens
+    : 0
+  const contextUsagePercent =
+    contextWindowTokens && latestUsageTokens > 0
+      ? Math.min(100, (latestUsageTokens / contextWindowTokens) * 100)
+      : 0
+
+  if (!debugInfo && !hasSessionUsage) {
     return (
       <div className="w-80 border-l bg-card p-4">
         <h3 className="font-semibold mb-4">Debug Info</h3>
@@ -39,6 +56,45 @@ export function DebugPanel({ debugInfo }: DebugPanelProps) {
       <h3 className="font-semibold mb-4">Debug Info</h3>
 
       <div className="space-y-4">
+        {hasSessionUsage && sessionUsage && (
+          <Card className="border-border/60">
+            <CardHeader className="pb-2 border-b">
+              <CardTitle className="text-xs font-semibold">Session Metrics</CardTitle>
+              <p className="text-[10px] text-muted-foreground">Real-time usage tracking</p>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1 bg-muted/40 p-2 rounded-lg border border-border/50">
+                  <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-semibold">Input</p>
+                  <p className="text-lg font-semibold">
+                    {(sessionUsage.inputTokens / 1000).toFixed(1)}K
+                  </p>
+                </div>
+                <div className="space-y-1 bg-muted/40 p-2 rounded-lg border border-border/50">
+                  <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-semibold">Output</p>
+                  <p className="text-lg font-semibold">
+                    {(sessionUsage.outputTokens / 1000).toFixed(1)}K
+                  </p>
+                </div>
+              </div>
+              <div className="pt-3 border-t space-y-2">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs text-muted-foreground font-medium">Total tokens</span>
+                  <span className="text-sm font-semibold">
+                    {((sessionUsage.inputTokens + sessionUsage.outputTokens) / 1000).toFixed(1)}K
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between bg-muted/60 px-3 py-2 rounded-lg border border-border/50">
+                  <span className="text-xs font-semibold">Cost estimate</span>
+                  <span className="text-base font-semibold">
+                    {formatCost(sessionUsage.cost)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {debugInfo.usage && (
           <Card>
             <CardHeader className="pb-3">
@@ -59,6 +115,31 @@ export function DebugPanel({ debugInfo }: DebugPanelProps) {
                   {(debugInfo.usage.inputTokens + debugInfo.usage.outputTokens).toLocaleString()}
                 </Badge>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {contextWindowTokens && latestUsageTokens > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Context Window</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-muted-foreground">Latest message</span>
+                <span className="font-semibold">
+                  {latestUsageTokens.toLocaleString()} / {contextWindowTokens.toLocaleString()}
+                </span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted">
+                <div
+                  className="h-2 rounded-full bg-primary"
+                  style={{ width: `${contextUsagePercent.toFixed(1)}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {contextUsagePercent.toFixed(1)}% of context window
+              </p>
             </CardContent>
           </Card>
         )}

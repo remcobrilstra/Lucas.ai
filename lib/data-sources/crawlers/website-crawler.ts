@@ -100,7 +100,6 @@ export class WebsiteCrawler {
         try {
           const result = await this.crawlPage(currentUrl, depth)
           this.results.push(result)
-          this.visited.add(currentUrl)
 
           // Add links to queue if we haven't hit max depth
           if (depth < this.options.maxDepth) {
@@ -113,6 +112,8 @@ export class WebsiteCrawler {
         } catch (error) {
           console.error(`Error crawling ${currentUrl}:`, error)
           // Continue with other pages even if one fails
+        } finally {
+          this.visited.add(currentUrl)
         }
 
         this.lastCrawlTime = Date.now()
@@ -144,17 +145,7 @@ export class WebsiteCrawler {
       // Extract title
       const title = $('title').text().trim() || new URL(url).pathname
 
-      // Remove script, style, and navigation elements
-      $('script, style, nav, header, footer, aside').remove()
-
-      // Convert HTML to Markdown
-      const bodyHtml = $('body').html() || html
-      const markdown = NodeHtmlMarkdown.translate(bodyHtml, {
-        useLinkReferenceDefinitions: false,
-        useInlineLinks: true,
-      })
-
-      // Extract all links
+      // Extract all links before stripping navigation elements
       const links: string[] = []
       $('a[href]').each((_, element) => {
         const href = $(element).attr('href')
@@ -169,6 +160,16 @@ export class WebsiteCrawler {
             // Invalid URL, skip
           }
         }
+      })
+
+      // Remove script, style, and navigation elements
+      $('script, style, nav, header, footer, aside').remove()
+
+      // Convert HTML to Markdown
+      const bodyHtml = $('body').html() || html
+      const markdown = NodeHtmlMarkdown.translate(bodyHtml, {
+        useLinkReferenceDefinitions: false,
+        useInlineLinks: true,
       })
 
       return {
@@ -254,10 +255,17 @@ export class WebsiteCrawler {
   private isSameDomain(url: string): boolean {
     try {
       const parsed = new URL(url)
-      return parsed.hostname === this.baseDomain
+      return this.normalizeHostname(parsed.hostname) === this.normalizeHostname(this.baseDomain)
     } catch {
       return false
     }
+  }
+
+  /**
+   * Normalize hostnames to treat www-prefixed hosts as equivalent.
+   */
+  private normalizeHostname(hostname: string): string {
+    return hostname.toLowerCase().replace(/^www\./, '')
   }
 
   /**

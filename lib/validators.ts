@@ -9,7 +9,7 @@ export const agentSchema = z.object({
   description: z.string().min(1, 'Description is required').max(500, 'Description must be less than 500 characters'),
   modelId: z.string().min(1, 'Model is required'),
   systemPrompt: z.string().min(1, 'System prompt is required'),
-  temperature: z.number().min(0).max(2).default(0.7),
+  temperature: z.number().min(0).max(2),
   maxTokens: z.number().min(1).max(128000).optional(),
   topP: z.number().min(0).max(1).optional(),
   avatar: z.string().optional(),
