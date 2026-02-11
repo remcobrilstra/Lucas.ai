@@ -15,6 +15,12 @@ datasource db {
 // Authentication & Organization Models
 // ============================================
 
+enum Role {
+  ADMIN
+  DEVELOPER
+  USER
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -94,7 +100,7 @@ model OrganizationMember {
   id             String   @id @default(cuid())
   organizationId String
   userId         String
-  role           String   @default("member") // admin, member
+  role           Role     @default(USER)
   createdAt      DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

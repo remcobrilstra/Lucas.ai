@@ -110,8 +110,21 @@ export default function DataSourcesPage() {
   const loadDataSources = useCallback(async () => {
     try {
       const response = await fetch("/api/data-sources")
-      const data = (await response.json()) as DataSource[]
-      setDataSources(data)
+      const data = (await response.json()) as unknown
+
+      if (!response.ok) {
+        const message =
+          typeof data === "object" && data !== null && "error" in data
+            ? String((data as { error?: string }).error)
+            : "Failed to load data sources"
+        throw new Error(message)
+      }
+
+      if (Array.isArray(data)) {
+        setDataSources(data as DataSource[])
+      } else {
+        setDataSources([])
+      }
     } catch (error) {
       console.error("Failed to load data sources:", error)
       toast({

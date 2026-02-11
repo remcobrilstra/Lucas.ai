@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
 import { z } from "zod"
+import { requireAuth, requireAdmin } from "@/lib/auth/role-middleware"
 
 const modelSchema = z.object({
   providerId: z.string().min(1, "Provider is required"),
@@ -17,10 +17,10 @@ const modelSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const session = await auth()
+    const { session, error } = await requireAuth()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     const { searchParams } = new URL(req.url)
@@ -53,10 +53,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth()
+    const { session, error } = await requireAdmin()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     const body = await req.json()

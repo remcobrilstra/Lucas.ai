@@ -38,6 +38,16 @@ const normalizeConfig = (value: unknown): Record<string, unknown> | undefined =>
   return value as Record<string, unknown>
 }
 
+const sanitizeToolNameSegment = (value: string): string => {
+  const normalized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "_")
+    .replace(/_{2,}/g, "_")
+    .replace(/^[_-]+|[_-]+$/g, "")
+
+  return normalized
+}
+
 const buildToolContext = async (
   tools: {
     builtInTool: {
@@ -116,7 +126,9 @@ const buildToolContext = async (
 
   // Register data sources as virtual tools
   for (const ds of dataSources) {
-    const toolName = `search_${ds.dataSource.name.toLowerCase().replace(/\s+/g, "_")}`
+    const baseName = sanitizeToolNameSegment(ds.dataSource.name)
+    const idSuffix = sanitizeToolNameSegment(ds.dataSourceId) || "data_source"
+    const toolName = baseName ? `search_${baseName}_${idSuffix}` : `search_${idSuffix}`
     const description = ds.dataSource.description
       ? `Search the "${ds.dataSource.name}" knowledge base. ${ds.dataSource.description}`
       : `Search the "${ds.dataSource.name}" knowledge base for relevant information.`

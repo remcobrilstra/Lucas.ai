@@ -7,6 +7,8 @@ import { AgentCard } from "@/components/agents/agent-card"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { Plus, Search, Bot } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { Role } from "@/lib/types/roles"
 
 interface Agent {
   id: string
@@ -27,15 +29,24 @@ interface Agent {
 
 export default function AgentsPage() {
   const { toast } = useToast()
+  const { data: session } = useSession()
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Check if user can create agents (Admin or Developer)
+  const canCreateAgent = session?.user?.role === Role.ADMIN || session?.user?.role === Role.DEVELOPER
 
   const loadAgents = useCallback(async () => {
     try {
       const response = await fetch("/api/agents")
       const data = await response.json()
-      setAgents(data)
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to load agents")
+      }
+
+      setAgents(Array.isArray(data) ? data : [])
     } catch {
       toast({
         title: "Error",
@@ -100,17 +111,19 @@ export default function AgentsPage() {
             backgroundClip: 'text'
           }}>Agents</h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base font-medium" style={{ color: 'hsl(20 50% 35%)' }}>
-            Create and manage your AI agents
+            {canCreateAgent ? 'Create and manage your AI agents' : 'Browse and chat with available agents'}
           </p>
         </div>
-        <Button asChild className="shadow-lg font-semibold self-start sm:self-auto touch-manipulation" style={{
-          background: 'linear-gradient(135deg, hsl(15 75% 55%) 0%, hsl(15 70% 48%) 100%)'
-        }}>
-          <Link href="/agents/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Agent
-          </Link>
-        </Button>
+        {canCreateAgent && (
+          <Button asChild className="shadow-lg font-semibold self-start sm:self-auto touch-manipulation" style={{
+            background: 'linear-gradient(135deg, hsl(15 75% 55%) 0%, hsl(15 70% 48%) 100%)'
+          }}>
+            <Link href="/agents/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Agent
+            </Link>
+          </Button>
+        )}
       </div>
 
       {agents.length > 0 && (
@@ -131,7 +144,7 @@ export default function AgentsPage() {
       {filteredAgents.length > 0 ? (
         <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {filteredAgents.map((agent) => (
-            <AgentCard key={agent.id} agent={agent} onDelete={handleDelete} />
+            <AgentCard key={agent.id} agent={agent} onDelete={handleDelete} canEdit={canCreateAgent} />
           ))}
         </div>
       ) : agents.length > 0 ? (
@@ -151,16 +164,20 @@ export default function AgentsPage() {
             </div>
             <h3 className="font-bold text-lg sm:text-xl mb-2" style={{ color: 'hsl(22 60% 18%)' }}>No agents yet</h3>
             <p className="mb-6 font-medium text-sm sm:text-base" style={{ color: 'hsl(20 50% 35%)' }}>
-              Create your first AI agent to get started with Lucas.ai
+              {canCreateAgent
+                ? 'Create your first AI agent to get started with Lucas.ai'
+                : 'No agents are available yet. Contact an admin to create agents.'}
             </p>
-            <Button asChild className="shadow-lg font-semibold touch-manipulation" style={{
-              background: 'linear-gradient(135deg, hsl(15 75% 55%) 0%, hsl(15 70% 48%) 100%)'
-            }}>
-              <Link href="/agents/new">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Agent
-              </Link>
-            </Button>
+            {canCreateAgent && (
+              <Button asChild className="shadow-lg font-semibold touch-manipulation" style={{
+                background: 'linear-gradient(135deg, hsl(15 75% 55%) 0%, hsl(15 70% 48%) 100%)'
+              }}>
+                <Link href="/agents/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Your First Agent
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       )}

@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
 import { localStorage } from "@/lib/data-sources/storage/local-storage"
 import { processorRegistry } from "@/lib/data-sources/processors/registry"
+import { requireDeveloper } from "@/lib/auth/role-middleware"
 
 export const runtime = "nodejs"
 
 export async function GET(req: Request) {
   try {
-    const session = await auth()
+    const { session, error } = await requireDeveloper()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     // Get user's organization
@@ -51,10 +51,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth()
+    const { session, error } = await requireDeveloper()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     // Get user's organization

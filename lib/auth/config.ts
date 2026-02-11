@@ -5,12 +5,23 @@ import Google from "next-auth/providers/google"
 import { prisma } from "@/lib/db/prisma"
 import { compare } from "bcryptjs"
 import { loginSchema } from "@/lib/validators"
+import { Role } from "@/lib/types/roles"
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string
+      role?: Role
+      organizationId?: string
     } & DefaultSession["user"]
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string
+    role?: Role
+    organizationId?: string
   }
 }
 
@@ -64,15 +75,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
       }
+
+      // Fetch user's role and organization on every token refresh
+      // or when explicitly triggered (e.g., after role update)
+      if (token.id && (trigger === "signIn" || trigger === "update" || !token.role)) {
+        const membership = await prisma.organizationMember.findFirst({
+          where: { userId: token.id },
+          orderBy: { createdAt: "desc" }, // Get most recent org membership
+          select: {
+            role: true,
+            organizationId: true,
+          },
+        })
+
+        if (membership) {
+          token.role = membership.role as Role
+          token.organizationId = membership.organizationId
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
+        session.user.role = token.role
+        session.user.organizationId = token.organizationId
       }
       return session
     },

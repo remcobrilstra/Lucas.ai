@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
+import { requireDeveloper } from "@/lib/auth/role-middleware"
 
 export async function GET(request: NextRequest) {
   try {
+    const { session, error } = await requireDeveloper()
+    if (error) {
+      return error
+    }
+
     const searchParams = request.nextUrl.searchParams
     const days = parseInt(searchParams.get("days") || "30")
 

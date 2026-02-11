@@ -37,6 +37,8 @@ import {
   Upload,
   Trash2,
   RefreshCw,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -160,6 +162,7 @@ export default function DataSourceDetailPage({
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [documentsExpanded, setDocumentsExpanded] = useState(false)
   const { toast } = useToast()
 
   // Config form state
@@ -677,72 +680,90 @@ export default function DataSourceDetailPage({
                   }
                 </CardDescription>
               </div>
-              {dataSource.type === "files" && (
-                <Button onClick={() => setUploadDialogOpen(true)}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Add More Files
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDocumentsExpanded((prev) => !prev)}
+                  aria-expanded={documentsExpanded}
+                  aria-controls="data-source-documents"
+                >
+                  {documentsExpanded ? (
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 mr-2" />
+                  )}
+                  {documentsExpanded ? "Hide" : "Show"}
                 </Button>
-              )}
+                {dataSource.type === "files" && (
+                  <Button onClick={() => setUploadDialogOpen(true)}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Add More Files
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Chunks</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {documents.map((doc) => {
-                  const docStatusInfo = statusConfig[doc.status]
-                  const DocStatusIcon = docStatusInfo.icon
+          {documentsExpanded && (
+            <CardContent id="data-source-documents">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Chunks</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {documents.map((doc) => {
+                    const docStatusInfo = statusConfig[doc.status]
+                    const DocStatusIcon = docStatusInfo.icon
 
-                  return (
-                    <TableRow key={doc.id}>
-                      <TableCell className="font-medium">
-                        {doc.type === "webpage" ? (
-                          <a href={doc.pageUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                            {doc.name}
-                          </a>
-                        ) : (
-                          doc.name
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {doc.type === "webpage" ? "Webpage" : doc.fileType?.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={docStatusInfo.color}>
-                          <DocStatusIcon
-                            className={`h-3 w-3 mr-1 ${doc.status === "processing" ? "animate-spin" : ""}`}
-                          />
-                          {docStatusInfo.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{doc.totalChunks}</TableCell>
-                      <TableCell className="text-right">
-                        {dataSource.type === "files" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteDocument(doc.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
+                    return (
+                      <TableRow key={doc.id}>
+                        <TableCell className="font-medium">
+                          {doc.type === "webpage" ? (
+                            <a href={doc.pageUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                              {doc.name}
+                            </a>
+                          ) : (
+                            doc.name
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {doc.type === "webpage" ? "Webpage" : doc.fileType?.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={docStatusInfo.color}>
+                            <DocStatusIcon
+                              className={`h-3 w-3 mr-1 ${doc.status === "processing" ? "animate-spin" : ""}`}
+                            />
+                            {docStatusInfo.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{doc.totalChunks}</TableCell>
+                        <TableCell className="text-right">
+                          {dataSource.type === "files" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteDocument(doc.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          )}
         </Card>
       )}
 

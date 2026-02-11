@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
 import { z } from "zod"
+import { requireAdmin } from "@/lib/auth/role-middleware"
 
 const updateModelSchema = z.object({
   displayName: z.string().min(1).optional(),
@@ -19,10 +19,10 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    const { session, error } = await requireAdmin()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     const body = await req.json()
@@ -59,10 +59,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    const { session, error } = await requireAdmin()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     // Check if any agents are using this model

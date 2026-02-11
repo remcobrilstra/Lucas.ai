@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
+import { requireAdmin } from "@/lib/auth/role-middleware"
 
 export async function GET() {
   try {
-    const session = await auth()
+    const { session, error } = await requireAdmin()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     // Get all providers

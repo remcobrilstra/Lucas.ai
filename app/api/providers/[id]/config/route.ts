@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
 import { encrypt } from "@/lib/utils/crypto"
+import { requireAdmin } from "@/lib/auth/role-middleware"
+import { Role } from "@/lib/types/roles"
 
 export async function GET(
   req: Request,
@@ -9,10 +10,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    const { session, error } = await requireAdmin()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     // Get user's organization (for now, we'll create one if it doesn't exist)
@@ -58,10 +59,10 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    const { session, error } = await requireAdmin()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     const body = await req.json()
@@ -86,7 +87,7 @@ export async function POST(
           members: {
             create: {
               userId: session.user.id,
-              role: "admin",
+              role: Role.ADMIN,
             },
           },
         },
@@ -137,10 +138,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    const { session, error } = await requireAdmin()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     // Get user's organization

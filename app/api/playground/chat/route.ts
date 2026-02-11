@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
 import { getAIProviderForModel } from "@/lib/ai/provider-factory"
 import { calculateCost } from "@/lib/utils/cost-calculator"
 import type { Message } from "@/lib/ai/types"
+import { requireAuth } from "@/lib/auth/role-middleware"
 
 const playgroundChatSchema = z.object({
   modelId: z.string().min(1, "Model is required"),
@@ -24,10 +24,10 @@ type PlaygroundChatRequest = z.infer<typeof playgroundChatSchema>
 
 export async function POST(req: Request) {
   try {
-    const session = await auth()
+    const { session, error } = await requireAuth()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     const body = (await req.json()) as PlaygroundChatRequest

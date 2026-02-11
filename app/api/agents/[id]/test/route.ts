@@ -51,7 +51,8 @@ export async function POST(
           message,
           organizationId: orgMember.organizationId,
         })
-
+        console.log("Starting agent response stream...")
+        
         // Create unified stream response
         const encoder = new TextEncoder()
         const readableStream = new ReadableStream({

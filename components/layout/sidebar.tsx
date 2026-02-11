@@ -13,37 +13,45 @@ import {
   X,
 } from "lucide-react"
 import { useEffect, useRef } from "react"
+import { useSession } from "next-auth/react"
+import { Role } from "@/lib/types/roles"
 
 const navigation = [
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    allowedRoles: [Role.ADMIN, Role.DEVELOPER], // Analytics visible to Admin + Developer
   },
   {
     name: "Agents",
     href: "/agents",
     icon: Bot,
+    allowedRoles: [Role.ADMIN, Role.DEVELOPER, Role.USER], // All roles can view
   },
   {
     name: "Data Sources",
     href: "/data-sources",
     icon: Database,
+    allowedRoles: [Role.ADMIN, Role.DEVELOPER], // Admin + Developer only
   },
   {
     name: "Playground",
     href: "/playground",
     icon: Sparkles,
+    allowedRoles: [Role.ADMIN, Role.DEVELOPER, Role.USER], // All roles
   },
   {
     name: "Tools",
     href: "/tools",
     icon: Wrench,
+    allowedRoles: [Role.ADMIN, Role.DEVELOPER], // Admin + Developer only
   },
   {
     name: "Settings",
     href: "/settings",
     icon: Settings,
+    allowedRoles: [Role.ADMIN], // Admin only
   },
 ]
 
@@ -55,6 +63,13 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   const previousPathname = useRef(pathname)
+  const { data: session } = useSession()
+
+  // Filter navigation items based on user role
+  const userRole = session?.user?.role || Role.USER
+  const filteredNavigation = navigation.filter((item) =>
+    item.allowedRoles.includes(userRole)
+  )
 
   // Close sidebar on route change (mobile) - only when pathname actually changes
   useEffect(() => {
@@ -131,7 +146,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1 sm:space-y-1.5 px-2 sm:px-3 py-3 sm:py-4 overflow-y-auto">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
             return (
               <Link

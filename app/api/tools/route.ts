@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
 import { z } from "zod"
+import { requireDeveloper } from "@/lib/auth/role-middleware"
 
 const toolSchema = z.object({
   name: z.string().min(1).max(100),
@@ -27,10 +27,10 @@ const buildPlaceholderSchema = (name: string, description: string) => ({
 
 export async function GET(req: Request) {
   try {
-    const session = await auth()
+    const { session, error } = await requireDeveloper()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     const { searchParams } = new URL(req.url)
@@ -53,10 +53,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth()
+    const { session, error } = await requireDeveloper()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     const body = await req.json()

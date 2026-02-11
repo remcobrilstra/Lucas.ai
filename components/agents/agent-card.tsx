@@ -22,9 +22,10 @@ interface AgentCardProps {
     }
   }
   onDelete?: (id: string) => void
+  canEdit?: boolean
 }
 
-export function AgentCard({ agent, onDelete }: AgentCardProps) {
+export function AgentCard({ agent, onDelete, canEdit = true }: AgentCardProps) {
   return (
     <Card className="flex flex-col shadow-lg border-amber-200" style={{
       background: 'linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(30 54% 94%) 100%)'
@@ -90,22 +91,26 @@ export function AgentCard({ agent, onDelete }: AgentCardProps) {
             Test
           </Link>
         </Button>
-        <Button asChild variant="outline" size="sm" className="border-amber-300 hover:bg-amber-50 font-semibold" style={{
-          color: 'hsl(20 50% 35%)'
-        }}>
-          <Link href={`/agents/${agent.id}/edit`}>
-            <Edit className="h-4 w-4" />
-          </Link>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onDelete?.(agent.id)}
-          className="border-amber-300 hover:bg-red-50 font-semibold"
-          style={{ color: 'hsl(0 70% 50%)' }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {canEdit && (
+          <>
+            <Button asChild variant="outline" size="sm" className="border-amber-300 hover:bg-amber-50 font-semibold" style={{
+              color: 'hsl(20 50% 35%)'
+            }}>
+              <Link href={`/agents/${agent.id}/edit`}>
+                <Edit className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete?.(agent.id)}
+              className="border-amber-300 hover:bg-red-50 font-semibold"
+              style={{ color: 'hsl(0 70% 50%)' }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </CardFooter>
     </Card>
   )

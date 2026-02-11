@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth/config"
 import { prisma } from "@/lib/db/prisma"
 import { agentSchema } from "@/lib/validators"
+import { requireAuth, requireDeveloper } from "@/lib/auth/role-middleware"
+import { Role } from "@/lib/types/roles"
 
 export async function GET() {
   try {
-    const session = await auth()
+    const { session, error } = await requireAuth()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     // Get user's organization
@@ -54,10 +55,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth()
+    const { session, error } = await requireDeveloper()
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (error) {
+      return error
     }
 
     const body = await req.json()
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
           members: {
             create: {
               userId: session.user.id,
-              role: "admin",
+              role: Role.ADMIN,
             },
           },
         },
